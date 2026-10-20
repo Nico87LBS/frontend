@@ -145,6 +145,8 @@ const RewardCard = ({
             aria-hidden='true'
           />
           {t('pointsCost', { count: reward.pointsCost })}
+          {reward.quotaCount > 0 &&
+            ` · ${t(`quota.${reward.quotaPeriod}`, { count: reward.quotaCount })}`}
         </Typography>
       </Box>
 
@@ -182,6 +184,8 @@ RewardCard.propTypes = {
     description: PropTypes.string,
     name: PropTypes.string.isRequired,
     pointsCost: PropTypes.number.isRequired,
+    quotaCount: PropTypes.number,
+    quotaPeriod: PropTypes.string,
   }).isRequired,
 }
 
