@@ -42,7 +42,15 @@
     "editTitle": "Edit Reward",
     "addTitle": "Add Reward",
     "saveChanges": "Save Changes",
-    "addReward": "Add Reward"
+    "addReward": "Add Reward",
+    "errorInvalidQuota": "The limit must be a whole number, 0 or more",
+    "quota": "Limit per member",
+    "quotaNone": "No limit",
+    "quotaPeriod": "Limit period",
+    "perDay": "per day",
+    "perWeek": "per week",
+    "perMonth": "per month",
+    "quotaHelp": "How many times each member can redeem it per calendar day, week (from Monday) or month. Leave empty for no limit."
   },
   "view": {
     "subtitle": "Use the points you earn to choose something special.",
@@ -52,5 +60,13 @@
     "emptyTitle": "No rewards yet",
     "emptyDescription": "Add a reward — like movie night or a treat — that circle members can redeem their points for.",
     "createReward": "Create a reward"
+  },
+  "quota": {
+    "day_one": "{{count}} per day",
+    "day_other": "{{count}} per day",
+    "week_one": "{{count}} per week",
+    "week_other": "{{count}} per week",
+    "month_one": "{{count}} per month",
+    "month_other": "{{count}} per month"
   }
 }
