@@ -247,6 +247,8 @@
     "username": "Username: {{username}}",
     "created": "Created: {{date}}",
     "changePassword": "Change Password",
+    "changePhoto": "Change photo",
+    "photoUpdated": "Photo updated",
     "deleteAccount": "Delete Account",
     "createdSuccess": "Child account \"{{name}}\" created successfully!",
     "createFailed": "Failed to create child account: {{error}}",

@@ -16,20 +16,15 @@ import {
   Typography,
 } from '@mui/joy'
 import { useQueryClient } from '@tanstack/react-query'
-import imageCompression from 'browser-image-compression'
 import PropTypes from 'prop-types'
 import { useRef, useState } from 'react'
-import Cropper from 'react-easy-crop'
 import { useTranslation } from 'react-i18next'
 
-import AppModal from '../../components/common/AppModal'
-import ModalActions from '../../components/common/ModalActions'
+import PhotoCropModal from '../../components/common/PhotoCropModal'
 import { useUserProfile } from '../../queries/UserQueries'
 import { useNotification } from '../../service/NotificationProvider'
-import { apiClient } from '../../utils/ApiClient'
 import { UpdateUserDetails } from '../../utils/Fetcher'
 import { resolvePhotoURL } from '../../utils/Helpers'
-import { getCroppedImg } from '../../utils/imageCropUtils'
 import LoadingComponent from '../components/Loading'
 import SettingsLayout from './SettingsLayout'
 
@@ -55,23 +50,15 @@ const ProfileContent = ({ refetchUserProfile, userProfile }) => {
   const [timezone, setTimezone] = useState(
     userProfile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
   )
-  const [isUploading, setIsUploading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const fileInputRef = useRef()
-  const [crop, setCrop] = useState({ x: 0, y: 0 })
-  const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
-  const [showCropper, setShowCropper] = useState(false)
   const [selectedFile, setSelectedFile] = useState(null)
 
   const timezones = getTimezones()
 
   const closeCropper = () => {
     if (selectedFile) URL.revokeObjectURL(selectedFile)
-    setShowCropper(false)
     setSelectedFile(null)
-    setCrop({ x: 0, y: 0 })
-    setZoom(1)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -79,47 +66,14 @@ const ProfileContent = ({ refetchUserProfile, userProfile }) => {
     const file = event.target.files[0]
     if (!file) return
     setSelectedFile(URL.createObjectURL(file))
-    setShowCropper(true)
   }
 
-  const handleCropSave = async () => {
-    if (!croppedAreaPixels) return
-    setIsUploading(true)
-    try {
-      const croppedBlob = await getCroppedImg(
-        selectedFile,
-        croppedAreaPixels,
-        160,
-        160,
-        'image/jpeg',
-      )
-      const compressedFile = await imageCompression(croppedBlob, {
-        maxSizeMB: 0.02,
-        maxWidthOrHeight: 160,
-        useWebWorker: true,
-        fileType: 'image/jpeg',
-        initialQuality: 0.8,
-      })
-
-      const formData = new FormData()
-      formData.append('file', compressedFile, 'profile.jpg')
-      const response = await apiClient.upload('/users/profile_photo', formData)
-      if (!response.ok) throw new Error('Upload failed')
-      await response.json()
-      await refetchUserProfile()
-      showSuccess({
-        title: t('profile.photoUpdated'),
-        message: t('profile.photoUpdatedMessage'),
-      })
-      closeCropper()
-    } catch (error) {
-      showError({
-        title: t('profile.uploadFailed'),
-        message: t('profile.uploadFailedMessage'),
-      })
-    } finally {
-      setIsUploading(false)
-    }
+  const handlePhotoUploaded = async () => {
+    await refetchUserProfile()
+    showSuccess({
+      title: t('profile.photoUpdated'),
+      message: t('profile.photoUpdatedMessage'),
+    })
   }
 
   const handleSave = async () => {
@@ -225,7 +179,6 @@ const ProfileContent = ({ refetchUserProfile, userProfile }) => {
               variant='soft'
               startDecorator={<AddAPhotoRounded />}
               onClick={() => fileInputRef.current?.click()}
-              loading={isUploading}
             >
               {t('profile.changePhoto')}
             </Button>
@@ -309,56 +262,12 @@ const ProfileContent = ({ refetchUserProfile, userProfile }) => {
         </Sheet>
       </Box>
 
-      <AppModal
-        open={showCropper}
+      <PhotoCropModal
+        image={selectedFile}
+        uploadPath='/users/profile_photo'
         onClose={closeCropper}
-        title={t('profile.editPhoto')}
-        size='sm'
-        closeOnBackdrop={!isUploading}
-        closeOnEscape={!isUploading}
-        footer={
-          <ModalActions
-            secondary={{
-              label: t('profile.cancel'),
-              disabled: isUploading,
-              onClick: closeCropper,
-            }}
-            primary={{
-              label: t('profile.save'),
-              loading: isUploading,
-              disabled: !croppedAreaPixels,
-              onClick: handleCropSave,
-            }}
-          />
-        }
-      >
-        <Box
-          sx={{
-            aspectRatio: '1',
-            bgcolor: 'background.level2',
-            borderRadius: 'lg',
-            maxWidth: 360,
-            mx: 'auto',
-            overflow: 'hidden',
-            position: 'relative',
-            width: '100%',
-          }}
-        >
-          <Cropper
-            image={selectedFile}
-            crop={crop}
-            zoom={zoom}
-            aspect={1}
-            cropShape='round'
-            showGrid={false}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
-            onCropComplete={(croppedArea, pixels) =>
-              setCroppedAreaPixels(pixels)
-            }
-          />
-        </Box>
-      </AppModal>
+        onUploaded={handlePhotoUploaded}
+      />
     </SettingsLayout>
   )
 }

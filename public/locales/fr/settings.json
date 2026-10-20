@@ -230,6 +230,8 @@
     "username": "Identifiant : {{username}}",
     "created": "Créé le : {{date}}",
     "changePassword": "Changer le mot de passe",
+    "changePhoto": "Changer la photo",
+    "photoUpdated": "Photo mise à jour",
     "deleteAccount": "Supprimer le compte",
     "createdSuccess": "Le sous-compte « {{name}} » a été créé avec succès !",
     "createFailed": "Impossible de créer le sous-compte : {{error}}",

@@ -1,4 +1,5 @@
 import {
+  AddAPhotoRounded,
   DeleteOutlineRounded,
   EditRounded,
   InfoOutlined,
@@ -18,9 +19,10 @@ import {
   Typography,
 } from '@mui/joy'
 import { useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import PhotoCropModal from '../../components/common/PhotoCropModal'
 import { useLocalization } from '../../contexts/LocalizationContext'
 import { PAYWALL_REASON, usePaywall } from '../../contexts/PaywallContext'
 import useConfirmationModal from '../../hooks/useConfirmationModal'
@@ -31,7 +33,7 @@ import {
   DeleteChildUser,
   UpdateChildPassword,
 } from '../../utils/Fetcher'
-import { isPlusAccount } from '../../utils/Helpers'
+import { isPlusAccount, resolvePhotoURL } from '../../utils/Helpers'
 import ConfirmationModal from '../Modals/Inputs/ConfirmationModal'
 import CreateChildUserModal from '../Modals/Inputs/CreateChildUserModal'
 import PasswordChangeModal from '../Modals/Inputs/PasswordChangeModal'
@@ -58,6 +60,9 @@ const ChildUserSettings = () => {
   const [passwordModalOpen, setPasswordModalOpen] = useState(false)
   const [selectedChildId, setSelectedChildId] = useState(null)
   const [deletingChildId, setDeletingChildId] = useState(null)
+  const photoInputRef = useRef()
+  const [photoChildId, setPhotoChildId] = useState(null)
+  const [photoFile, setPhotoFile] = useState(null)
 
   const isParentUser = userProfile?.userType === 0 && !userProfile?.parentUserId
 
@@ -101,6 +106,32 @@ const ChildUserSettings = () => {
       })
       throw error
     }
+  }
+
+  const choosePhoto = childId => {
+    setPhotoChildId(childId)
+    photoInputRef.current?.click()
+  }
+
+  const handlePhotoChange = event => {
+    const file = event.target.files[0]
+    if (!file) return
+    setPhotoFile(URL.createObjectURL(file))
+  }
+
+  const closePhotoCropper = () => {
+    if (photoFile) URL.revokeObjectURL(photoFile)
+    setPhotoFile(null)
+    setPhotoChildId(null)
+    if (photoInputRef.current) photoInputRef.current.value = ''
+  }
+
+  const handlePhotoUploaded = async () => {
+    showNotification({
+      type: 'success',
+      message: t('subaccounts.photoUpdated'),
+    })
+    await refreshChildren()
   }
 
   const handleUpdatePassword = async newPassword => {
@@ -306,6 +337,7 @@ const ChildUserSettings = () => {
                     >
                       <Avatar
                         size='lg'
+                        src={resolvePhotoURL(child.image)}
                         sx={{
                           bgcolor: 'primary.softBg',
                           color: 'primary.softColor',
@@ -335,6 +367,15 @@ const ChildUserSettings = () => {
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <IconButton
+                          size='sm'
+                          variant='plain'
+                          color='neutral'
+                          onClick={() => choosePhoto(child.id)}
+                          aria-label={`${t('subaccounts.changePhoto')}: ${name}`}
+                        >
+                          <AddAPhotoRounded />
+                        </IconButton>
                         <IconButton
                           size='sm'
                           variant='plain'
@@ -413,6 +454,21 @@ const ChildUserSettings = () => {
           setPasswordModalOpen(false)
           setSelectedChildId(null)
         }}
+      />
+
+      <input
+        ref={photoInputRef}
+        type='file'
+        accept='image/*'
+        hidden
+        onChange={handlePhotoChange}
+      />
+
+      <PhotoCropModal
+        image={photoFile}
+        uploadPath={`/users/subaccounts/${photoChildId}/profile_photo`}
+        onClose={closePhotoCropper}
+        onUploaded={handlePhotoUploaded}
       />
 
       <ConfirmationModal config={confirmModalConfig} />
